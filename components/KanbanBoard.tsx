@@ -1,0 +1,171 @@
+'use client';
+import { useState, useMemo } from 'react';
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  rectIntersection,
+} from '@dnd-kit/core';
+import type { Prospect, KanbanStatus } from '@/lib/types';
+import { COLUMNS } from '@/lib/types';
+import KanbanColumn from './KanbanColumn';
+import { CardContent } from './ProspectCard';
+import SlideOver from './SlideOver';
+import TopBar from './TopBar';
+
+export default function KanbanBoard({ initialProspects }: { initialProspects: Prospect[] }) {
+  const [prospects, setProspects] = useState<Prospect[]>(initialProspects);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [selectedProspect, setSelectedProspect] = useState<Prospect | null>(null);
+  const [search, setSearch] = useState('');
+  const [filterStatut, setFilterStatut] = useState('');
+  const [filterPriorite, setFilterPriorite] = useState('');
+  const [filterContacte, setFilterContacte] = useState('');
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
+  );
+
+  const filtered = useMemo(() => {
+    return prospects.filter(p => {
+      if (search) {
+        const q = search.toLowerCase();
+        if (
+          ![p.nom, p.email, p.telephone, p.adresse, p.recherche].some(v =>
+            v?.toLowerCase().includes(q)
+          )
+        )
+          return false;
+      }
+      if (filterStatut && p.statut_site !== filterStatut) return false;
+      if (filterPriorite && String(p.priorite) !== filterPriorite) return false;
+      if (filterContacte && p.contacte !== filterContacte) return false;
+      return true;
+    });
+  }, [prospects, search, filterStatut, filterPriorite, filterContacte]);
+
+  const colProspects = (status: KanbanStatus) =>
+    filtered.filter(p => p.kanban_status === status);
+
+  const activeDrag = activeId ? prospects.find(p => p.id === activeId) : null;
+
+  const statutOptions = [
+    ...new Set(prospects.map(p => p.statut_site).filter((s): s is string => !!s)),
+  ].sort();
+
+  function handleDragStart(e: DragStartEvent) {
+    setActiveId(e.active.id as string);
+  }
+
+  async function handleDragEnd(e: DragEndEvent) {
+    setActiveId(null);
+    const { active, over } = e;
+    if (!over) return;
+
+    const newStatus = over.id as KanbanStatus;
+    const id = active.id as string;
+    const prospect = prospects.find(p => p.id === id);
+    if (!prospect || prospect.kanban_status === newStatus) return;
+
+    setProspects(prev =>
+      prev.map(p => (p.id === id ? { ...p, kanban_status: newStatus } : p))
+    );
+    if (selectedProspect?.id === id) {
+      setSelectedProspect(prev => (prev ? { ...prev, kanban_status: newStatus } : null));
+    }
+
+    try {
+      const res = await fetch(`/api/prospects/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kanban_status: newStatus }),
+      });
+      if (!res.ok) throw new Error('update failed');
+    } catch {
+      setProspects(prev =>
+        prev.map(p => (p.id === id ? { ...p, kanban_status: prospect.kanban_status } : p))
+      );
+    }
+  }
+
+  function handleProspectUpdate(updated: Prospect) {
+    setProspects(prev => prev.map(p => (p.id === updated.id ? updated : p)));
+    setSelectedProspect(updated);
+  }
+
+  return (
+    <div className="flex flex-col h-screen">
+      <TopBar
+        search={search}
+        onSearch={setSearch}
+        filterStatut={filterStatut}
+        onFilterStatut={setFilterStatut}
+        filterPriorite={filterPriorite}
+        onFilterPriorite={setFilterPriorite}
+        filterContacte={filterContacte}
+        onFilterContacte={setFilterContacte}
+        statutOptions={statutOptions}
+        totalCount={filtered.length}
+      />
+
+      <div className="flex-1 overflow-auto">
+        <DndContext
+          sensors={sensors}
+          collisionDetection={rectIntersection}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="flex gap-4 p-4 items-start min-w-max">
+            {/* First 4 columns */}
+            {COLUMNS.slice(0, 4).map(col => (
+              <div key={col.id} className="w-72 flex flex-col">
+                <KanbanColumn
+                  id={col.id}
+                  label={col.label}
+                  prospects={colProspects(col.id)}
+                  onCardClick={setSelectedProspect}
+                />
+              </div>
+            ))}
+
+            {/* Validé + Refusé in one visual column */}
+            <div className="w-72 flex flex-col gap-4">
+              <KanbanColumn
+                id="valide"
+                label="✅ Validé"
+                prospects={colProspects('valide')}
+                onCardClick={setSelectedProspect}
+              />
+              <KanbanColumn
+                id="refuse"
+                label="❌ Refusé"
+                prospects={colProspects('refuse')}
+                onCardClick={setSelectedProspect}
+              />
+            </div>
+          </div>
+
+          <DragOverlay>
+            {activeDrag && (
+              <div className="w-72 rotate-1 shadow-2xl opacity-95">
+                <CardContent prospect={activeDrag} />
+              </div>
+            )}
+          </DragOverlay>
+        </DndContext>
+      </div>
+
+      {selectedProspect && (
+        <SlideOver
+          prospect={selectedProspect}
+          onClose={() => setSelectedProspect(null)}
+          onUpdate={handleProspectUpdate}
+        />
+      )}
+    </div>
+  );
+}

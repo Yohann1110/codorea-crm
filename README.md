@@ -1,36 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Codorea CRM
 
-## Getting Started
+Internal Kanban board for tracking ~3000 prospects. Password-protected, shared between Yohann and Nicole.
 
-First, run the development server:
+## Stack
+
+- Next.js 16 (App Router) + TypeScript + Tailwind CSS v4
+- Supabase (PostgreSQL)
+- @dnd-kit — drag and drop
+- Vercel — deploy target
+
+## Setup
+
+### 1. Create Supabase project
+
+Go to [supabase.com](https://supabase.com), create a new project, then open the **SQL Editor** and run the contents of `supabase/schema.sql`.
+
+### 2. Set environment variables
+
+Copy `.env.local.example` to `.env.local` and fill in your values:
+
+```bash
+cp .env.local.example .env.local
+```
+
+| Variable | Where to find |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Project Settings → API → Project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Project Settings → API → anon key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Project Settings → API → service_role key |
+| `ADMIN_PASSWORD` | Choose any password |
+
+### 3. Import CSV
+
+Copy `final.csv` (from the parent folder) to the project root and rename it `prospects.csv`, then run:
+
+```bash
+cp ../final.csv prospects.csv
+npx tsx scripts/import-csv.ts
+```
+
+### 4. Run locally
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) — you will be redirected to `/login`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 5. Deploy to Vercel
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npx vercel --prod
+```
 
-## Learn More
+Add the four environment variables in the Vercel project settings (Settings → Environment Variables).
 
-To learn more about Next.js, take a look at the following resources:
+## Usage
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Drag cards** between columns to update status (saved instantly to Supabase)
+- **Click a card** to open the detail panel — change column, add notes (auto-saved on blur)
+- **Top bar** — search by name/email/phone, filter by statut site, priority, or contacté status
+- Each column header shows the live count of visible cards
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Kanban columns
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Column | `kanban_status` value |
+|---|---|
+| À faire | `a_faire` |
+| Yohann | `yohann` |
+| Nicole | `nicole` |
+| Email envoyé | `email_envoye` |
+| Validé | `valide` |
+| Refusé | `refuse` |
