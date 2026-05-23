@@ -97,6 +97,18 @@ export default function KanbanBoard({ initialProspects }: { initialProspects: Pr
     setSelectedProspect(updated);
   }
 
+  async function handleDelete(id: string) {
+    setProspects(prev => prev.filter(p => p.id !== id));
+    setSelectedProspect(null);
+    await fetch(`/api/prospects/${id}`, { method: 'DELETE' });
+  }
+
+  async function handleEmptyTrash() {
+    setProspects(prev => prev.filter(p => p.kanban_status !== 'poubelle'));
+    if (selectedProspect?.kanban_status === 'poubelle') setSelectedProspect(null);
+    await fetch('/api/prospects', { method: 'DELETE' });
+  }
+
   return (
     <div className="flex flex-col h-screen">
       <TopBar
@@ -112,17 +124,17 @@ export default function KanbanBoard({ initialProspects }: { initialProspects: Pr
         totalCount={filtered.length}
       />
 
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-x-auto overflow-y-hidden min-h-0">
         <DndContext
           sensors={sensors}
           collisionDetection={rectIntersection}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
-          <div className="flex gap-4 p-4 items-start min-w-max">
+          <div className="flex gap-4 p-4 h-full min-w-max">
             {/* First 4 columns */}
             {COLUMNS.slice(0, 4).map(col => (
-              <div key={col.id} className="w-72 flex flex-col">
+              <div key={col.id} className="w-72 flex flex-col h-full min-h-0">
                 <KanbanColumn
                   id={col.id}
                   label={col.label}
@@ -132,19 +144,34 @@ export default function KanbanBoard({ initialProspects }: { initialProspects: Pr
               </div>
             ))}
 
-            {/* Validé + Refusé in one visual column */}
-            <div className="w-72 flex flex-col gap-4">
+            {/* Validé + Refusé stacked */}
+            <div className="w-72 flex flex-col h-full min-h-0 gap-4">
+              <div className="flex-1 flex flex-col min-h-0">
+                <KanbanColumn
+                  id="valide"
+                  label="✅ Validé"
+                  prospects={colProspects('valide')}
+                  onCardClick={setSelectedProspect}
+                />
+              </div>
+              <div className="flex-1 flex flex-col min-h-0">
+                <KanbanColumn
+                  id="refuse"
+                  label="❌ Refusé"
+                  prospects={colProspects('refuse')}
+                  onCardClick={setSelectedProspect}
+                />
+              </div>
+            </div>
+
+            {/* Trash column */}
+            <div className="w-72 flex flex-col h-full min-h-0">
               <KanbanColumn
-                id="valide"
-                label="✅ Validé"
-                prospects={colProspects('valide')}
+                id="poubelle"
+                label="🗑 Poubelle"
+                prospects={colProspects('poubelle')}
                 onCardClick={setSelectedProspect}
-              />
-              <KanbanColumn
-                id="refuse"
-                label="❌ Refusé"
-                prospects={colProspects('refuse')}
-                onCardClick={setSelectedProspect}
+                onEmptyTrash={handleEmptyTrash}
               />
             </div>
           </div>
@@ -164,6 +191,7 @@ export default function KanbanBoard({ initialProspects }: { initialProspects: Pr
           prospect={selectedProspect}
           onClose={() => setSelectedProspect(null)}
           onUpdate={handleProspectUpdate}
+          onDelete={handleDelete}
         />
       )}
     </div>

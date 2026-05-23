@@ -1,4 +1,11 @@
-export type KanbanStatus = 'a_faire' | 'yohann' | 'nicole' | 'email_envoye' | 'valide' | 'refuse';
+export type KanbanStatus =
+  | 'a_faire'
+  | 'yohann'
+  | 'nicole'
+  | 'email_envoye'
+  | 'valide'
+  | 'refuse'
+  | 'poubelle';
 
 export interface Prospect {
   id: string;
@@ -26,4 +33,5 @@ export const COLUMNS: { id: KanbanStatus; label: string }[] = [
   { id: 'email_envoye', label: 'Email envoyé' },
   { id: 'valide', label: 'Validé' },
   { id: 'refuse', label: 'Refusé' },
+  { id: 'poubelle', label: '🗑 Poubelle' },
 ];

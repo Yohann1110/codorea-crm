@@ -58,26 +58,30 @@ const prospects = dataRows.map(row => {
   };
 });
 
-const BATCH = 100;
-let inserted = 0;
-let skipped = 0;
+async function main() {
+  const BATCH = 100;
+  let inserted = 0;
+  let skipped = 0;
 
-for (let i = 0; i < prospects.length; i += BATCH) {
-  const batch = prospects.slice(i, i + BATCH);
+  for (let i = 0; i < prospects.length; i += BATCH) {
+    const batch = prospects.slice(i, i + BATCH);
 
-  const { data, error } = await supabase
-    .from('prospects')
-    .upsert(batch, { onConflict: 'nom,telephone', ignoreDuplicates: true })
-    .select('id');
+    const { data, error } = await supabase
+      .from('prospects')
+      .upsert(batch, { onConflict: 'nom,telephone', ignoreDuplicates: true })
+      .select('id');
 
-  if (error) {
-    console.error(`Batch ${i}–${i + BATCH}: ${error.message}`);
-  } else {
-    inserted += data?.length ?? 0;
-    skipped += batch.length - (data?.length ?? 0);
+    if (error) {
+      console.error(`Batch ${i}–${i + BATCH}: ${error.message}`);
+    } else {
+      inserted += data?.length ?? 0;
+      skipped += batch.length - (data?.length ?? 0);
+    }
+
+    process.stdout.write(`\r  ${Math.min(i + BATCH, prospects.length)} / ${prospects.length}`);
   }
 
-  process.stdout.write(`\r  ${Math.min(i + BATCH, prospects.length)} / ${prospects.length}`);
+  console.log(`\n\n✅  Inserted: ${inserted}   Skipped (duplicates): ${skipped}`);
 }
 
-console.log(`\n\n✅  Inserted: ${inserted}   Skipped (duplicates): ${skipped}`);
+main().catch(err => { console.error(err); process.exit(1); });

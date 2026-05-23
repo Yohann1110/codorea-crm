@@ -7,12 +7,15 @@ interface Props {
   prospect: Prospect;
   onClose: () => void;
   onUpdate: (updated: Prospect) => void;
+  onDelete: (id: string) => Promise<void>;
 }
 
-export default function SlideOver({ prospect, onClose, onUpdate }: Props) {
+export default function SlideOver({ prospect, onClose, onUpdate, onDelete }: Props) {
   const [notes, setNotes] = useState(prospect.notes ?? '');
   const [status, setStatus] = useState<KanbanStatus>(prospect.kanban_status);
   const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const savedNotes = useRef(prospect.notes ?? '');
 
   useEffect(() => {
@@ -51,6 +54,12 @@ export default function SlideOver({ prospect, onClose, onUpdate }: Props) {
       savedNotes.current = notes;
       await patch({ notes });
     }
+  }
+
+  async function handleDelete() {
+    if (!confirmDelete) { setConfirmDelete(true); return; }
+    setDeleting(true);
+    await onDelete(prospect.id);
   }
 
   return (
@@ -174,6 +183,25 @@ export default function SlideOver({ prospect, onClose, onUpdate }: Props) {
               rows={5}
               className="w-full px-3 py-2 border border-[#E6E9EE] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#635BFF] resize-none"
             />
+          </div>
+
+          {/* Delete */}
+          <div className="pt-2 border-t border-[#E6E9EE]">
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              onBlur={() => setConfirmDelete(false)}
+              className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                confirmDelete
+                  ? 'bg-red-600 text-white hover:bg-red-700'
+                  : 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200'
+              }`}
+            >
+              {deleting ? 'Suppression…' : confirmDelete ? '⚠ Confirmer la suppression' : '🗑 Supprimer définitivement'}
+            </button>
+            {confirmDelete && (
+              <p className="text-xs text-red-500 text-center mt-1">Cette action est irréversible</p>
+            )}
           </div>
         </div>
       </div>

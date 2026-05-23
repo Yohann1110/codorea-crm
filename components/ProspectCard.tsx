@@ -3,9 +3,10 @@ import { useDraggable } from '@dnd-kit/core';
 import type { Prospect } from '@/lib/types';
 
 const STATUT_COLORS: Record<string, string> = {
-  'FACEBOOK SEULEMENT': 'bg-orange-100 text-orange-700',
+  'AUCUN SITE': 'bg-purple-100 text-purple-700',
+  'BUILDER AMATEUR': 'bg-amber-100 text-amber-700',
   'SITE MEDIOCRE': 'bg-red-100 text-red-700',
-  'PAS DE SITE': 'bg-purple-100 text-purple-700',
+  'FACEBOOK SEULEMENT': 'bg-orange-100 text-orange-700',
 };
 
 const PRIORITE_COLORS: Record<number, string> = {
@@ -19,14 +20,28 @@ function hostname(url: string): string {
   catch { return url; }
 }
 
-export function CardContent({ prospect, onClick }: { prospect: Prospect; onClick?: () => void }) {
+export function CardContent({
+  prospect,
+  onClick,
+  isTrash,
+}: {
+  prospect: Prospect;
+  onClick?: () => void;
+  isTrash?: boolean;
+}) {
   return (
     <div
       onClick={onClick}
-      className="bg-white border border-[#E6E9EE] rounded-xl p-3 shadow-sm cursor-pointer hover:shadow-md hover:border-[#635BFF]/40 transition-all select-none"
+      className={`border rounded-xl p-3 shadow-sm cursor-pointer transition-all select-none ${
+        isTrash
+          ? 'bg-gray-50 border-gray-200 opacity-60 hover:opacity-80'
+          : 'bg-white border-[#E6E9EE] hover:shadow-md hover:border-[#635BFF]/40'
+      }`}
     >
       <div className="flex items-start justify-between gap-2 mb-1.5">
-        <span className="font-semibold text-[#0A2540] text-sm leading-tight">{prospect.nom || '—'}</span>
+        <span className={`font-semibold text-sm leading-tight ${prospect.nom ? 'text-[#0A2540]' : 'text-gray-400 italic'}`}>
+          {prospect.nom || 'Sans nom'}
+        </span>
         {prospect.priorite != null && (
           <span
             className={`text-[10px] px-1.5 py-0.5 rounded font-bold shrink-0 ${
@@ -91,9 +106,11 @@ export function CardContent({ prospect, onClick }: { prospect: Prospect; onClick
 export default function ProspectCard({
   prospect,
   onClick,
+  isTrash,
 }: {
   prospect: Prospect;
   onClick: () => void;
+  isTrash?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: prospect.id,
@@ -106,7 +123,7 @@ export default function ProspectCard({
       {...attributes}
       className={isDragging ? 'opacity-30' : ''}
     >
-      <CardContent prospect={prospect} onClick={onClick} />
+      <CardContent prospect={prospect} onClick={onClick} isTrash={isTrash} />
     </div>
   );
 }
