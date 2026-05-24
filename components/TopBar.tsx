@@ -9,6 +9,8 @@ interface Props {
   onFilterPriorite: (v: string) => void;
   filterContacte: string;
   onFilterContacte: (v: string) => void;
+  filterEmail: string;
+  onFilterEmail: (v: string) => void;
   statutOptions: string[];
   totalCount: number;
 }
@@ -18,6 +20,7 @@ export default function TopBar({
   filterStatut, onFilterStatut,
   filterPriorite, onFilterPriorite,
   filterContacte, onFilterContacte,
+  filterEmail, onFilterEmail,
   statutOptions,
   totalCount,
 }: Props) {
@@ -61,9 +64,15 @@ export default function TopBar({
         <option value="Non">Non contacté</option>
       </select>
 
-      {(search || filterStatut || filterPriorite || filterContacte) && (
+      <select value={filterEmail} onChange={e => onFilterEmail(e.target.value)} className={selectClass}>
+        <option value="">Tous emails</option>
+        <option value="avec">Avec email</option>
+        <option value="sans">Sans email</option>
+      </select>
+
+      {(search || filterStatut || filterPriorite || filterContacte || filterEmail) && (
         <button
-          onClick={() => { onSearch(''); onFilterStatut(''); onFilterPriorite(''); onFilterContacte(''); }}
+          onClick={() => { onSearch(''); onFilterStatut(''); onFilterPriorite(''); onFilterContacte(''); onFilterEmail(''); }}
           className="text-xs text-[#635BFF] hover:underline"
         >
           Effacer filtres

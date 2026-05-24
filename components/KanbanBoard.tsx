@@ -25,6 +25,7 @@ export default function KanbanBoard({ initialProspects }: { initialProspects: Pr
   const [filterStatut, setFilterStatut] = useState('');
   const [filterPriorite, setFilterPriorite] = useState('');
   const [filterContacte, setFilterContacte] = useState('');
+  const [filterEmail, setFilterEmail] = useState('');
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
@@ -44,9 +45,11 @@ export default function KanbanBoard({ initialProspects }: { initialProspects: Pr
       if (filterStatut && p.statut_site !== filterStatut) return false;
       if (filterPriorite && String(p.priorite) !== filterPriorite) return false;
       if (filterContacte && p.contacte !== filterContacte) return false;
+      if (filterEmail === 'avec' && !p.email) return false;
+      if (filterEmail === 'sans' && p.email) return false;
       return true;
     });
-  }, [prospects, search, filterStatut, filterPriorite, filterContacte]);
+  }, [prospects, search, filterStatut, filterPriorite, filterContacte, filterEmail]);
 
   const colProspects = (status: KanbanStatus) =>
     filtered.filter(p => p.kanban_status === status);
@@ -120,6 +123,8 @@ export default function KanbanBoard({ initialProspects }: { initialProspects: Pr
         onFilterPriorite={setFilterPriorite}
         filterContacte={filterContacte}
         onFilterContacte={setFilterContacte}
+        filterEmail={filterEmail}
+        onFilterEmail={setFilterEmail}
         statutOptions={statutOptions}
         totalCount={filtered.length}
       />
