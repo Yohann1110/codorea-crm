@@ -3,6 +3,8 @@ import { fetchAllProspects } from '@/lib/fetch-all-prospects';
 import KanbanBoard from '@/components/KanbanBoard';
 import type { Prospect } from '@/lib/types';
 
+export const dynamic = 'force-dynamic';
+
 export default async function HomePage() {
   const supabase = createAdminClient();
 

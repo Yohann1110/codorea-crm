@@ -31,8 +31,9 @@ export default function KanbanBoard({ initialProspects }: { initialProspects: Pr
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
   );
 
-  const filtered = useMemo(() => {
+  const aFaireFiltered = useMemo(() => {
     return prospects.filter(p => {
+      if (p.kanban_status !== 'a_faire') return false;
       if (search) {
         const q = search.toLowerCase();
         if (
@@ -52,7 +53,9 @@ export default function KanbanBoard({ initialProspects }: { initialProspects: Pr
   }, [prospects, search, filterStatut, filterPriorite, filterContacte, filterEmail]);
 
   const colProspects = (status: KanbanStatus) =>
-    filtered.filter(p => p.kanban_status === status);
+    status === 'a_faire'
+      ? aFaireFiltered
+      : prospects.filter(p => p.kanban_status === status);
 
   const activeDrag = activeId ? prospects.find(p => p.id === activeId) : null;
 
@@ -126,7 +129,7 @@ export default function KanbanBoard({ initialProspects }: { initialProspects: Pr
         filterEmail={filterEmail}
         onFilterEmail={setFilterEmail}
         statutOptions={statutOptions}
-        totalCount={filtered.length}
+        totalCount={aFaireFiltered.length}
       />
 
       <div className="flex-1 overflow-x-auto overflow-y-hidden min-h-0">
