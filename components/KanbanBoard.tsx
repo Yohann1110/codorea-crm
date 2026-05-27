@@ -33,16 +33,15 @@ export default function KanbanBoard({ initialProspects }: { initialProspects: Pr
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
   );
 
+  const validStatuses = new Set(COLUMNS.map(c => c.id));
+
+  // Filters only apply to the "À faire" column
   const aFaireFiltered = useMemo(() => {
     return prospects.filter(p => {
-      if (p.kanban_status !== 'a_faire') return false;
+      if (p.kanban_status !== 'a_faire' && validStatuses.has(p.kanban_status)) return false;
       if (search) {
         const q = search.toLowerCase();
-        if (
-          ![p.nom, p.email, p.telephone, p.adresse, p.recherche].some(v =>
-            v?.toLowerCase().includes(q)
-          )
-        )
+        if (![p.nom, p.email, p.telephone, p.adresse, p.recherche].some(v => v?.toLowerCase().includes(q)))
           return false;
       }
       if (filterStatut && p.statut_site !== filterStatut) return false;
@@ -52,18 +51,14 @@ export default function KanbanBoard({ initialProspects }: { initialProspects: Pr
       if (filterEmail === 'sans' && p.email) return false;
       return true;
     });
-  }, [prospects, search, filterStatut, filterPriorite, filterContacte, filterEmail]);
+  }, [prospects, search, filterStatut, filterPriorite, filterContacte, filterEmail, validStatuses]);
 
-  const validStatuses = new Set(COLUMNS.map(c => c.id));
+  // Other columns: no filtering applied
   const colProspects = (status: KanbanStatus) =>
-    filtered.filter(p => p.kanban_status === status);
+    prospects.filter(p => p.kanban_status === status);
 
-  // prospects with unknown statuses (e.g. old 'yohann'/'nicole') fall into À faire
-  const aFaireExtra = filtered.filter(p => !validStatuses.has(p.kanban_status));
-  const colProspectsWithFallback = (status: KanbanStatus) => {
-    const base = colProspects(status);
-    return status === 'a_faire' ? [...base, ...aFaireExtra] : base;
-  };
+  const colProspectsWithFallback = (status: KanbanStatus) =>
+    status === 'a_faire' ? aFaireFiltered : colProspects(status);
 
   const activeDrag = activeId ? prospects.find(p => p.id === activeId) : null;
 
@@ -141,7 +136,7 @@ export default function KanbanBoard({ initialProspects }: { initialProspects: Pr
         filterEmail={filterEmail}
         onFilterEmail={setFilterEmail}
         statutOptions={statutOptions}
-        totalCount={filtered.length}
+        totalCount={aFaireFiltered.length}
         onTogglePostIts={() => setShowPostIts(v => !v)}
         postItsOpen={showPostIts}
       />
