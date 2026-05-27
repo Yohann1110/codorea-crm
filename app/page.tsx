@@ -1,6 +1,6 @@
 import { createAdminClient } from '@/lib/supabase-admin';
 import { fetchAllProspects } from '@/lib/fetch-all-prospects';
-import KanbanBoard from '@/components/KanbanBoard';
+import KanbanBoardDynamic from '@/components/KanbanBoardDynamic';
 import type { Prospect } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -10,7 +10,7 @@ export default async function HomePage() {
 
   try {
     const data = await fetchAllProspects(supabase);
-    return <KanbanBoard initialProspects={data as Prospect[]} />;
+    return <KanbanBoardDynamic initialProspects={data as Prospect[]} />;
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Erreur inconnue';
     return (

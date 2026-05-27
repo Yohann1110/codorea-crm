@@ -16,6 +16,7 @@ import KanbanColumn from './KanbanColumn';
 import { CardContent } from './ProspectCard';
 import SlideOver from './SlideOver';
 import TopBar from './TopBar';
+import PostItBoard from './PostItBoard';
 
 export default function KanbanBoard({ initialProspects }: { initialProspects: Prospect[] }) {
   const [prospects, setProspects] = useState<Prospect[]>(initialProspects);
@@ -26,6 +27,7 @@ export default function KanbanBoard({ initialProspects }: { initialProspects: Pr
   const [filterPriorite, setFilterPriorite] = useState('');
   const [filterContacte, setFilterContacte] = useState('');
   const [filterEmail, setFilterEmail] = useState('');
+  const [showPostIts, setShowPostIts] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
@@ -52,10 +54,16 @@ export default function KanbanBoard({ initialProspects }: { initialProspects: Pr
     });
   }, [prospects, search, filterStatut, filterPriorite, filterContacte, filterEmail]);
 
+  const validStatuses = new Set(COLUMNS.map(c => c.id));
   const colProspects = (status: KanbanStatus) =>
-    status === 'a_faire'
-      ? aFaireFiltered
-      : prospects.filter(p => p.kanban_status === status);
+    filtered.filter(p => p.kanban_status === status);
+
+  // prospects with unknown statuses (e.g. old 'yohann'/'nicole') fall into À faire
+  const aFaireExtra = filtered.filter(p => !validStatuses.has(p.kanban_status));
+  const colProspectsWithFallback = (status: KanbanStatus) => {
+    const base = colProspects(status);
+    return status === 'a_faire' ? [...base, ...aFaireExtra] : base;
+  };
 
   const activeDrag = activeId ? prospects.find(p => p.id === activeId) : null;
 
@@ -73,6 +81,7 @@ export default function KanbanBoard({ initialProspects }: { initialProspects: Pr
     if (!over) return;
 
     const newStatus = over.id as KanbanStatus;
+    if (!validStatuses.has(newStatus)) return;
     const id = active.id as string;
     const prospect = prospects.find(p => p.id === id);
     if (!prospect || prospect.kanban_status === newStatus) return;
@@ -115,6 +124,9 @@ export default function KanbanBoard({ initialProspects }: { initialProspects: Pr
     await fetch('/api/prospects', { method: 'DELETE' });
   }
 
+  // Main columns: first 5 (a_faire, appele, a_rappeler, demo_a_faire, email_envoye)
+  const mainCols = COLUMNS.slice(0, 5);
+
   return (
     <div className="flex flex-col h-screen">
       <TopBar
@@ -129,7 +141,9 @@ export default function KanbanBoard({ initialProspects }: { initialProspects: Pr
         filterEmail={filterEmail}
         onFilterEmail={setFilterEmail}
         statutOptions={statutOptions}
-        totalCount={aFaireFiltered.length}
+        totalCount={filtered.length}
+        onTogglePostIts={() => setShowPostIts(v => !v)}
+        postItsOpen={showPostIts}
       />
 
       <div className="flex-1 overflow-x-auto overflow-y-hidden min-h-0">
@@ -140,13 +154,13 @@ export default function KanbanBoard({ initialProspects }: { initialProspects: Pr
           onDragEnd={handleDragEnd}
         >
           <div className="flex gap-4 p-4 h-full min-w-max">
-            {/* First 4 columns */}
-            {COLUMNS.slice(0, 4).map(col => (
+            {/* 5 main call columns */}
+            {mainCols.map(col => (
               <div key={col.id} className="w-72 flex flex-col h-full min-h-0">
                 <KanbanColumn
                   id={col.id}
                   label={col.label}
-                  prospects={colProspects(col.id)}
+                  prospects={colProspectsWithFallback(col.id)}
                   onCardClick={setSelectedProspect}
                 />
               </div>
@@ -201,6 +215,10 @@ export default function KanbanBoard({ initialProspects }: { initialProspects: Pr
           onUpdate={handleProspectUpdate}
           onDelete={handleDelete}
         />
+      )}
+
+      {showPostIts && (
+        <PostItBoard onClose={() => setShowPostIts(false)} />
       )}
     </div>
   );

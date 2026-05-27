@@ -10,9 +10,26 @@ interface Props {
   onDelete: (id: string) => Promise<void>;
 }
 
+function toDatetimeLocal(iso: string | null): string {
+  if (!iso) return '';
+  // Convert UTC ISO to local datetime-local value
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function formatCallbackDate(iso: string | null): string {
+  if (!iso) return '';
+  return new Date(iso).toLocaleString('fr-CH', {
+    day: 'numeric', month: 'long', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
+}
+
 export default function SlideOver({ prospect, onClose, onUpdate, onDelete }: Props) {
   const [notes, setNotes] = useState(prospect.notes ?? '');
   const [status, setStatus] = useState<KanbanStatus>(prospect.kanban_status);
+  const [callbackDate, setCallbackDate] = useState(toDatetimeLocal(prospect.callback_date));
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -25,9 +42,10 @@ export default function SlideOver({ prospect, onClose, onUpdate, onDelete }: Pro
   useEffect(() => {
     setNotes(prospect.notes ?? '');
     savedNotes.current = prospect.notes ?? '';
+    setCallbackDate(toDatetimeLocal(prospect.callback_date));
   }, [prospect.id]);
 
-  async function patch(updates: Partial<{ kanban_status: KanbanStatus; notes: string }>) {
+  async function patch(updates: Partial<{ kanban_status: KanbanStatus; notes: string; callback_date: string | null }>) {
     setSaving(true);
     try {
       const res = await fetch(`/api/prospects/${prospect.id}`, {
@@ -46,7 +64,13 @@ export default function SlideOver({ prospect, onClose, onUpdate, onDelete }: Pro
 
   async function handleStatusChange(v: KanbanStatus) {
     setStatus(v);
-    await patch({ kanban_status: v });
+    const updates: Parameters<typeof patch>[0] = { kanban_status: v };
+    // clear callback_date when leaving a_rappeler
+    if (v !== 'a_rappeler') {
+      updates.callback_date = null;
+      setCallbackDate('');
+    }
+    await patch(updates);
   }
 
   async function handleNotesBlur() {
@@ -54,6 +78,11 @@ export default function SlideOver({ prospect, onClose, onUpdate, onDelete }: Pro
       savedNotes.current = notes;
       await patch({ notes });
     }
+  }
+
+  async function handleCallbackDateChange(v: string) {
+    setCallbackDate(v);
+    await patch({ callback_date: v ? new Date(v).toISOString() : null });
   }
 
   async function handleDelete() {
@@ -100,6 +129,29 @@ export default function SlideOver({ prospect, onClose, onUpdate, onDelete }: Pro
               ))}
             </select>
           </div>
+
+          {/* Callback date — only for À rappeler */}
+          {status === 'a_rappeler' && (
+            <div>
+              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+                Date de rappel
+                {saving && (
+                  <span className="ml-2 text-[#635BFF] font-normal normal-case">enregistrement…</span>
+                )}
+              </label>
+              <input
+                type="datetime-local"
+                value={callbackDate}
+                onChange={e => handleCallbackDateChange(e.target.value)}
+                className="w-full px-3 py-2 border border-[#E6E9EE] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#635BFF] bg-white text-[#0A2540]"
+              />
+              {callbackDate && (
+                <p className="text-xs text-[#635BFF] mt-1">
+                  🔔 {formatCallbackDate(new Date(callbackDate).toISOString())}
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Info grid */}
           <div className="grid grid-cols-2 gap-x-4 gap-y-3">

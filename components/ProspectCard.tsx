@@ -20,6 +20,13 @@ function hostname(url: string): string {
   catch { return url; }
 }
 
+function formatCallbackShort(iso: string | null): string {
+  if (!iso) return '';
+  return new Date(iso).toLocaleString('fr-CH', {
+    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+  });
+}
+
 export function CardContent({
   prospect,
   onClick,
@@ -67,6 +74,13 @@ export function CardContent({
         <div className="text-xs text-gray-500 mb-1.5">
           ⭐ {prospect.note_google ?? '—'} ·{' '}
           {prospect.nb_avis != null ? prospect.nb_avis.toLocaleString('fr-CH') : '—'} avis
+        </div>
+      )}
+
+      {/* Callback date badge for À rappeler */}
+      {prospect.kanban_status === 'a_rappeler' && prospect.callback_date && (
+        <div className="text-[10px] font-medium text-orange-600 bg-orange-50 border border-orange-200 rounded-lg px-2 py-1 mb-1.5">
+          🔔 {formatCallbackShort(prospect.callback_date)}
         </div>
       )}
 

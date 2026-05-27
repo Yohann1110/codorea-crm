@@ -9,13 +9,12 @@ export async function PATCH(
   const body = await request.json();
 
   const updates: Record<string, unknown> = {};
-  if (body.kanban_status !== undefined) updates.kanban_status = body.kanban_status;
-  if (body.notes !== undefined) updates.notes = body.notes;
-  if (body.callback_date !== undefined) updates.callback_date = body.callback_date;
+  if (body.content !== undefined) updates.content = body.content;
+  if (body.color !== undefined) updates.color = body.color;
 
   const supabase = createAdminClient();
   const { data, error } = await supabase
-    .from('prospects')
+    .from('post_its')
     .update(updates)
     .eq('id', id)
     .select()
@@ -31,7 +30,7 @@ export async function DELETE(
 ) {
   const { id } = await params;
   const supabase = createAdminClient();
-  const { error } = await supabase.from('prospects').delete().eq('id', id);
+  const { error } = await supabase.from('post_its').delete().eq('id', id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }
