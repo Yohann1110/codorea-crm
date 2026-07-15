@@ -26,6 +26,9 @@ create index if not exists prospects_priorite_idx      on prospects (priorite);
 -- Migration: remap old person-specific columns to a_faire
 -- UPDATE prospects SET kanban_status = 'a_faire' WHERE kanban_status IN ('yohann', 'nicole');
 
+-- Migration: the "Email envoyé" column was removed
+-- UPDATE prospects SET kanban_status = 'a_faire' WHERE kanban_status = 'email_envoye';
+
 -- Migration: add callback_date column to existing table
 -- ALTER TABLE prospects ADD COLUMN IF NOT EXISTS callback_date timestamptz;
 

@@ -119,7 +119,7 @@ export default function KanbanBoard({ initialProspects }: { initialProspects: Pr
     await fetch('/api/prospects', { method: 'DELETE' });
   }
 
-  // Main columns: first 5 (a_faire, appele, a_rappeler, demo_a_faire, email_envoye)
+  // Main columns: first 5 (a_faire, pas_de_reponse, appele, a_rappeler, demo_a_faire)
   const mainCols = COLUMNS.slice(0, 5);
 
   return (

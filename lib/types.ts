@@ -1,9 +1,9 @@
 export type KanbanStatus =
   | 'a_faire'
+  | 'pas_de_reponse'
   | 'appele'
   | 'a_rappeler'
   | 'demo_a_faire'
-  | 'email_envoye'
   | 'valide'
   | 'refuse'
   | 'poubelle';
@@ -37,10 +37,10 @@ export interface PostIt {
 
 export const COLUMNS: { id: KanbanStatus; label: string }[] = [
   { id: 'a_faire', label: 'À faire' },
+  { id: 'pas_de_reponse', label: '🔇 Pas de réponse' },
   { id: 'appele', label: '📞 Appelé' },
   { id: 'a_rappeler', label: '🔄 À rappeler' },
   { id: 'demo_a_faire', label: '🌐 Démo à faire' },
-  { id: 'email_envoye', label: '✉ Email envoyé' },
   { id: 'valide', label: 'Validé' },
   { id: 'refuse', label: 'Refusé' },
   { id: 'poubelle', label: '🗑 Poubelle' },

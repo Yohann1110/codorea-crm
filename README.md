@@ -67,8 +67,10 @@ Add the four environment variables in the Vercel project settings (Settings → 
 | Column | `kanban_status` value |
 |---|---|
 | À faire | `a_faire` |
-| Yohann | `yohann` |
-| Nicole | `nicole` |
-| Email envoyé | `email_envoye` |
+| Pas de réponse | `pas_de_reponse` |
+| Appelé | `appele` |
+| À rappeler | `a_rappeler` |
+| Démo à faire | `demo_a_faire` |
 | Validé | `valide` |
 | Refusé | `refuse` |
+| Poubelle | `poubelle` |
